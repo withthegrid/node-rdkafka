@@ -2,7 +2,7 @@ var KafkaNode = require('./lib/index.js');
 
 var consumer = new KafkaNode.KafkaConsumer(
   {
-    'group.id': 'testing-37',
+    'group.id': 'testing-43',
     'metadata.broker.list': 'localhost:9093',
     'enable.auto.commit': false,
   },
@@ -20,15 +20,25 @@ consumer.on('ready', function () {
 
   consumer.subscribe([topicName]);
 
-  setInterval(function () {
-    consumer.consume(10, topicName, 1);
-  }, 100);
+  consumeMessages(0, 100);
+  consumeMessages(1, 1000);
+});
 
-  setInterval(function () {
-    consumer.consume(10, topicName, 0);
-  }, 2500);
-})
-  .on('data', function (message) {
-    console.log('partition ' + message.partition + ' value: ' + message.value.toString());
-    consumer.commitMessage(message);
-  });
+function consumeMessages(partition, timeout) {
+  function consume() {
+    consumer.consume(10, topicName, partition, callback);
+  }
+
+  function callback(err, messages) {
+    messages.forEach(function (message) {
+      console.log('partition ' + message.partition + ' value: ' + message.value.toString());
+      consumer.commitMessage(message);
+    });
+
+    // wait for the timeout and then trigger the next consume
+    setTimeout(consume, timeout);
+  }
+
+  // kick-off recursive consume loop
+  consume();
+}
