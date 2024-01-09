@@ -2,7 +2,7 @@ var KafkaNode = require('./lib/index.js');
 
 var consumer = new KafkaNode.KafkaConsumer(
   {
-    'group.id': 'testing-43',
+    'group.id': 'testing-44',
     'metadata.broker.list': 'localhost:9093',
     'enable.auto.commit': false,
   },
