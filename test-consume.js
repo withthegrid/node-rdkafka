@@ -2,7 +2,7 @@ var KafkaNode = require('./lib/index.js');
 
 var consumer = new KafkaNode.KafkaConsumer(
   {
-    'group.id': 'testing-76',
+    'group.id': 'testing-78',
     'metadata.broker.list': 'localhost:9093',
     'enable.auto.commit': false,
     'rebalance_cb': true,
@@ -28,6 +28,7 @@ consumer.on('ready', function () {
   consumer.subscribe([topicName]);
 
   // do not wait on each consume
+  consumer.setDefaultConsumeLoopTimeoutDelay(500);
   consumer.setDefaultConsumeTimeout(0);
 
   // Trigger a consume loop which serves the rebalancing events
@@ -67,22 +68,14 @@ function startConsumeMessages(partition) {
       return;
     }
 
-    if(!isShuttingDown) {
-      consumer.consume(10, topicName, partition, callback);
-    }
+    consumer.consume(10, topicName, partition, callback);
   }
 
   function callback(err, messages) {
     messages.forEach(function (message) {
       console.log('partition ' + message.partition + ' value ' + message.value.toString());
-      if (!isShuttingDown) {
-        consumer.commitMessage(message);
-      }
+      consumer.commitMessage(message);
     });
-
-    if (isShuttingDown) {
-      return;
-    }
 
     // simulate performance
     if(partition === 0) {

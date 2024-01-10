@@ -24,10 +24,10 @@ function fillTopic() {
   producer.connect();
 
   producer.on('ready', function () {
-    for (var i = 0; i < 500; i++) {
+    for (var i = 0; i < 50000; i++) {
       producer.produce(topicName, 0, Buffer.from('message-' + i), null, Date.now());
     }
-    for (var n = 0; n < 500; n++) {
+    for (var n = 0; n < 50000; n++) {
       producer.produce(topicName, 1, Buffer.from('message-' + n), null, Date.now());
     }
   });
