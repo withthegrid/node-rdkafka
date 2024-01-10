@@ -1123,6 +1123,7 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
   if (info[1]->IsNumber()) {
     if (info[2]->IsString() && info[3]->IsNumber()) {
+      // Consume per partition
       if (!info[4]->IsFunction()) {
         return Nan::ThrowError("Need to specify a callback");
       }
@@ -1146,7 +1147,7 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
       uint32_t partition;
       if (partitionMaybe.IsNothing()) {
-        return Nan::ThrowError("Parameter must be a number over 0");
+        return Nan::ThrowError("Parameter must be a number equal to or over 0");
       } else {
         partition = partitionMaybe.FromJust();
       }
@@ -1159,7 +1160,6 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
       Nan::AsyncQueueWorker(
         new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms));  // NOLINT
     } else {
-      // 2 params
       if (!info[2]->IsFunction()) {
         return Nan::ThrowError("Need to specify a callback");
       }
@@ -1182,7 +1182,6 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
         new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
     }
   } else {
-    // single param
     if (!info[1]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }

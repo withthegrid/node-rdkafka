@@ -68,7 +68,7 @@ function startConsumeMessages(partition) {
       return;
     }
 
-    consumer.consume(10, topicName, partition, callback);
+    consumer.consume(1, topicName, partition, callback);
   }
 
   function callback(err, messages) {
