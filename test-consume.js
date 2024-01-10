@@ -2,7 +2,7 @@ var KafkaNode = require('./lib/index.js');
 
 var consumer = new KafkaNode.KafkaConsumer(
   {
-    'group.id': 'testing-54',
+    'group.id': 'testing-61',
     'metadata.broker.list': 'localhost:9093',
     'enable.auto.commit': false,
   },
@@ -34,28 +34,34 @@ function updateAssignmentsAndStartConsumeLoops() {
   var updatedAssignments = consumer.assignments();
 
   // find new assignments
-  var newAssignments = updatedAssignments.filter(function (a) {
-    return !assignments.includes(a);
+  var newAssignments = updatedAssignments.filter(function (updatedAssignment) {
+    return !assignments.some(function (assignment) {
+      return assignment.partition === updatedAssignment.partition;
+    });
   });
 
+  // update global assignments array
+  assignments = updatedAssignments;
+
+  // then start consume loops for the new assignments
   newAssignments.forEach(function (assignment) {
     startConsumeMessages(assignment.partition);
   });
-
-  assignments = updatedAssignments;
 }
 
 function startConsumeMessages(partition) {
+  console.log('partition: ' + partition + ' starting to consume');
+
   // simulate different performance
   var timeout = partition === 0 ? 500 : 2000;
 
   function consume() {
-    var isPartitionAssigned = assignments.includes(function(assignment) {
+    var isPartitionAssigned = assignments.some(function(assignment) {
       return assignment.partition === partition;
     });
 
     if (!isPartitionAssigned) {
-      // stop consuming
+      console.log('partition: ' + partition + ' stop consuming');
       return;
     }
 
@@ -63,6 +69,8 @@ function startConsumeMessages(partition) {
   }
 
   function callback(err, messages) {
+    console.log('partition: ' + partition + ' got callback');
+
     messages.forEach(function (message) {
       console.log('partition ' + message.partition + ' value: ' + message.value.toString());
       consumer.commitMessage(message);
