@@ -511,8 +511,7 @@ void ProducerSendOffsetsToTransaction::Execute() {
   Baton b = producer->SendOffsetsToTransaction(
     m_topic_partitions,
     consumer,
-    m_timeout_ms
-  );
+    m_timeout_ms);
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     SetErrorBaton(b);
@@ -814,26 +813,31 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
   bool looping = true;
   int timeout_ms = m_timeout_ms;
   std::size_t eof_event_count = 0;
-  
+
   // Disable forwarding for own partition
-  RdKafka::TopicPartition *topicPartition = RdKafka::TopicPartition::create(m_topic, m_partition);
-  RdKafka::Queue *queue = m_consumer->GetClient()->get_partition_queue(topicPartition);
-  
+  RdKafka::TopicPartition *topicPartition = RdKafka::TopicPartition::create(
+    m_topic, m_partition);
+  RdKafka::Queue *queue = m_consumer->GetClient()->get_partition_queue(
+    topicPartition);
+
   if (queue == NULL) {
-    SetErrorBaton(Baton(RdKafka::ERR__STATE, "TopicPartition has an invalid queue."));
+    SetErrorBaton(Baton(RdKafka::ERR__STATE,
+      "TopicPartition has an invalid queue."));
     return;
   }
-  
+
   RdKafka::ErrorCode err = queue->forward(NULL);
   if (err != RdKafka::ERR_NO_ERROR) {
-    SetErrorBaton(Baton(RdKafka::ERR__STATE, "Could not consume from given partition."));
+    SetErrorBaton(Baton(RdKafka::ERR__STATE,
+      "Could not consume from given partition."));
     return;
   }
 
   while (m_messages.size() - eof_event_count < max && looping) {
     if (!m_consumer->IsConnected()) {
       if (m_messages.size() == eof_event_count) {
-        SetErrorBaton(Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected"));
+        SetErrorBaton(Baton(RdKafka::ERR__STATE,
+          "KafkaConsumer is not connected"));
       }
       looping = false;
       continue;
@@ -850,8 +854,9 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
           timeout_ms = 1;
         }
 
-        // We will only go into this code path when `enable.partition.eof` is set to true
-        // In this case, consumer is also interested in EOF messages, so we return an EOF message
+        // We will only go into this code path when `enable.partition.eof` is
+        // set to true. In this case, consumer is also interested in EOF
+        // messages, so we return an EOF message
         m_messages.push_back(message);
         eof_event_count += 1;
         break;
@@ -987,8 +992,9 @@ void KafkaConsumerConsumeNum::Execute() {
             timeout_ms = 1;
           }
 
-          // We will only go into this code path when `enable.partition.eof` is set to true
-          // In this case, consumer is also interested in EOF messages, so we return an EOF message
+          // We will only go into this code path when `enable.partition.eof` is
+          // set to true. In this case, consumer is also interested in EOF
+          // messages, so we return an EOF message
           m_messages.push_back(message);
           eof_event_count += 1;
           break;

@@ -1098,7 +1098,8 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
-  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, timeout_sleep_delay_ms);
+  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(
+    callback, consumer, timeout_ms, timeout_sleep_delay_ms);
 
   info.GetReturnValue().Set(Nan::Null());
 }
