@@ -1,27 +1,42 @@
-var KafkaNode = require('./lib/index.js');
+/*
+ * node-rdkafka - Node.js wrapper for RdKafka C/C++ library
+ *
+ * Copyright (c) 2016 Blizzard Entertainment
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE.txt file for details.
+ */
 
-var consumer = new KafkaNode.KafkaConsumer({
-  'group.id': 'testing-80',
+var Kafka = require('./lib/index.js');
+
+var consumer = new Kafka.KafkaConsumer({
+  //'debug': 'all',
   'metadata.broker.list': 'localhost:9093',
+  'group.id': 'node-rdkafka-consumer-per-partition-example',
   'enable.auto.commit': false,
   'rebalance_cb': true,
 }, {
-  'auto.offset.reset': 'earliest',
+  'auto.offset.reset': 'earliest', // start from the beginning
 });
-
-consumer.on('subscribed', function(topics) {
-  console.log('subscribed: ', topics, ' assignments: ', consumer.assignments().map(function(a) {
-    return a.partition;
-  }));
-});
-
-consumer.connect();
 
 var topicName = 'consume-per-partition';
+
+// Keep track of which partitions are assigned.
 var assignments = [];
 
-consumer.on('ready', function() {
-  console.log('ready: ', consumer.globalConfig['group.id']);
+//logging debug messages, if debug is enabled
+consumer.on('event.log', function(log) {
+  console.log(log);
+});
+
+//logging all errors
+consumer.on('event.error', function(err) {
+  console.error('Error from consumer');
+  console.error(err);
+});
+
+consumer.on('ready', function(arg) {
+  console.log('consumer ready.' + JSON.stringify(arg));
 
   consumer.subscribe([topicName]);
 
@@ -34,15 +49,15 @@ consumer.on('ready', function() {
   consumer.consume();
 });
 
-
+// Start our own consume loops for all newly assigned partitions
 consumer.on('rebalance', function(err, updatedAssignments) {
   console.log('rebalancing done, got partitions assigned: ', updatedAssignments.map(function(a) {
     return a.partition;
   }));
 
   // find new assignments
-  var newAssignments = updatedAssignments.filter(function(updatedAssignment) {
-    return !assignments.some(function(assignment) {
+  var newAssignments = updatedAssignments.filter(function (updatedAssignment) {
+    return !assignments.some(function (assignment) {
       return assignment.partition === updatedAssignment.partition;
     });
   });
@@ -51,7 +66,7 @@ consumer.on('rebalance', function(err, updatedAssignments) {
   assignments = updatedAssignments;
 
   // then start consume loops for the new assignments
-  newAssignments.forEach(function(assignment) {
+  newAssignments.forEach(function (assignment) {
     startConsumeMessages(assignment.partition);
   });
 });
@@ -70,7 +85,7 @@ function startConsumeMessages(partition) {
     }
 
     // consume per 5 messages
-    consumer.consume(1, topicName, partition, callback);
+    consumer.consume(5, topicName, partition, callback);
   }
 
   function callback(err, messages) {
@@ -92,19 +107,14 @@ function startConsumeMessages(partition) {
   consume();
 }
 
-
-process.on('SIGUSR2', function() {
-  console.log('process received SIGUSR2. Shutting down consumer');
-  consumer.disconnect(function() {
-    console.log('Consumer disconnected. Shutting down...');
-    process.exit();
-  });
+consumer.on('disconnected', function(arg) {
+  console.log('consumer disconnected. ' + JSON.stringify(arg));
 });
 
-process.on('SIGINT', function() {
-  console.log('process received SIGINT. Shutting down consumer');
-  consumer.disconnect(function() {
-    console.log('Consumer disconnected. Shutting down...');
-    process.exit(0);
-  });
-});
+//starting the consumer
+consumer.connect();
+
+//stopping this example after 30s
+setTimeout(function() {
+  consumer.disconnect();
+}, 30000);
