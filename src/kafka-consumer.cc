@@ -1157,7 +1157,6 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
       v8::Local<v8::Function> cb = info[4].As<v8::Function>();
       Nan::Callback *callback = new Nan::Callback(cb);
-
       Nan::AsyncQueueWorker(
         new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms));  // NOLINT
     } else {
