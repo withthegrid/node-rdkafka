@@ -783,7 +783,7 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 }
 
 /**
- * @brief KafkaConsumer get messages worker.
+ * @brief KafkaConsumer get messages per partition worker.
  *
  * This callback will get a number of messages from a specific partition.
  * Can be of use in streams or places where you don't want an infinite
