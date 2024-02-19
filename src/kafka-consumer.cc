@@ -551,7 +551,8 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "assign", NodeAssign);
   Nan::SetPrototypeMethod(tpl, "unassign", NodeUnassign);
   Nan::SetPrototypeMethod(tpl, "assignments", NodeAssignments);
-  Nan::SetPrototypeMethod(tpl, "disableQueueForwarding", NodeDisableQueueForwarding);
+  Nan::SetPrototypeMethod(tpl, "disableQueueForwarding",
+    NodeDisableQueueForwarding);
 
   Nan::SetPrototypeMethod(tpl, "commit", NodeCommit);
   Nan::SetPrototypeMethod(tpl, "commitSync", NodeCommitSync);
