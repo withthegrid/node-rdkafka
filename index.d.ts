@@ -238,6 +238,8 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     setDefaultConsumeTimeout(timeoutMs: number): void;
 
+    disableQueueForwarding(topicPartition: TopicPartition): this;
+
     setDefaultConsumeLoopTimeoutDelay(timeoutMs: number): void;
 
     subscribe(topics: SubscribeTopicList): this;
