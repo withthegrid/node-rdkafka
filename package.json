@@ -1,6 +1,6 @@
 {
   "name": "node-rdkafka-withthegrid",
-  "version": "v2.19.1",
+  "version": "2.19.2",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "2.3.0",
   "main": "lib/index.js",
