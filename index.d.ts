@@ -184,17 +184,17 @@ export abstract class Client<Events extends string> extends EventEmitter {
 
     connectedTime(): number;
 
-    getLastError(): LibrdKafkaError;
+    getLastError(): LibrdKafkaError | null;
 
     disconnect(cb?: (err: any, data: ClientMetrics) => any): this;
     disconnect(timeout: number, cb?: (err: any, data: ClientMetrics) => any): this;
 
     isConnected(): boolean;
 
-    getMetadata(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError, data: Metadata) => any): any;
+    getMetadata(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError | null | undefined, data: Metadata) => any): any;
 
-    queryWatermarkOffsets(topic: string, partition: number, timeout: number, cb?: (err: LibrdKafkaError, offsets: WatermarkOffsets) => any): any;
-    queryWatermarkOffsets(topic: string, partition: number, cb?: (err: LibrdKafkaError, offsets: WatermarkOffsets) => any): any;
+    queryWatermarkOffsets(topic: string, partition: number, timeout: number, cb?: (err: LibrdKafkaError | null | undefined, offsets: WatermarkOffsets) => any): any;
+    queryWatermarkOffsets(topic: string, partition: number, cb?: (err: LibrdKafkaError | null | undefined, offsets: WatermarkOffsets) => any): any;
 
     on<E extends Events>(event: E, listener: EventListener<E>): this;
     once<E extends Events>(event: E, listener: EventListener<E>): this;
@@ -216,8 +216,8 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     commitSync(topicPartition: TopicPartitionOffset | TopicPartitionOffset[]): this;
 
-    committed(toppars: TopicPartition[], timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
-    committed(timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
+    committed(toppars: TopicPartition[], timeout: number, cb: (err: LibrdKafkaError | null | undefined, topicPartitions: TopicPartitionOffset[]) => void): this;
+    committed(timeout: number, cb: (err: LibrdKafkaError | null | undefined, topicPartitions: TopicPartitionOffset[]) => void): this;
 
     consume(number: number, topic: string, partition: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
     consume(number: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
@@ -250,8 +250,8 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     unsubscribe(): this;
 
-    offsetsForTimes(topicPartitions: TopicPartitionTime[], timeout: number, cb?: (err: LibrdKafkaError, offsets: TopicPartitionOffset[]) => any): void;
-    offsetsForTimes(topicPartitions: TopicPartitionTime[], cb?: (err: LibrdKafkaError, offsets: TopicPartitionOffset[]) => any): void;
+    offsetsForTimes(topicPartitions: TopicPartitionTime[], timeout: number, cb?: (err: LibrdKafkaError | null | undefined, offsets: TopicPartitionOffset[]) => any): void;
+    offsetsForTimes(topicPartitions: TopicPartitionTime[], cb?: (err: LibrdKafkaError | null | undefined, offsets: TopicPartitionOffset[]) => any): void;
 
     static createReadStream(conf: ConsumerGlobalConfig, topicConfig: ConsumerTopicConfig, streamOptions: ReadStreamOptions | number): ConsumerStream;
 }
@@ -259,7 +259,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 export class Producer extends Client<KafkaProducerEvents> {
     constructor(conf: ProducerGlobalConfig, topicConf?: ProducerTopicConfig);
 
-    flush(timeout?: NumberNullUndefined, cb?: (err: LibrdKafkaError) => void): this;
+    flush(timeout?: NumberNullUndefined, cb?: (err: LibrdKafkaError | null | undefined) => void): this;
 
     poll(): this;
 
@@ -269,15 +269,15 @@ export class Producer extends Client<KafkaProducerEvents> {
 
     static createWriteStream(conf: ProducerGlobalConfig, topicConf: ProducerTopicConfig, streamOptions: WriteStreamOptions): ProducerStream;
 
-    initTransactions(cb: (err: LibrdKafkaError) => void): void;
-    initTransactions(timeout: number, cb: (err: LibrdKafkaError) => void): void;
-    beginTransaction(cb: (err: LibrdKafkaError) => void): void;
-    commitTransaction(cb: (err: LibrdKafkaError) => void): void;
-    commitTransaction(timeout: number, cb: (err: LibrdKafkaError) => void): void;
-    abortTransaction(cb: (err: LibrdKafkaError) => void): void;
-    abortTransaction(timeout: number, cb: (err: LibrdKafkaError) => void): void;
-    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, cb: (err: LibrdKafkaError) => void): void;
-    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    initTransactions(cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    initTransactions(timeout: number, cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    beginTransaction(cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    commitTransaction(cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    commitTransaction(timeout: number, cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    abortTransaction(cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    abortTransaction(timeout: number, cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, cb: (err: LibrdKafkaError | null | undefined) => void): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, timeout: number, cb: (err: LibrdKafkaError | null | undefined) => void): void;
 }
 
 export class HighLevelProducer extends Producer {
@@ -333,14 +333,14 @@ export interface NewTopic {
 }
 
 export interface IAdminClient {
-    createTopic(topic: NewTopic, cb?: (err: LibrdKafkaError) => void): void;
-    createTopic(topic: NewTopic, timeout?: number, cb?: (err: LibrdKafkaError) => void): void;
+    createTopic(topic: NewTopic, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
+    createTopic(topic: NewTopic, timeout?: number, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
 
-    deleteTopic(topic: string, cb?: (err: LibrdKafkaError) => void): void;
-    deleteTopic(topic: string, timeout?: number, cb?: (err: LibrdKafkaError) => void): void;
+    deleteTopic(topic: string, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
+    deleteTopic(topic: string, timeout?: number, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
 
-    createPartitions(topic: string, desiredPartitions: number, cb?: (err: LibrdKafkaError) => void): void;
-    createPartitions(topic: string, desiredPartitions: number, timeout?: number, cb?: (err: LibrdKafkaError) => void): void;
+    createPartitions(topic: string, desiredPartitions: number, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
+    createPartitions(topic: string, desiredPartitions: number, timeout?: number, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
 
     disconnect(): void;
 }
