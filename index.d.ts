@@ -152,7 +152,7 @@ type EventListenerMap = {
     'connection.failure': (error: LibrdKafkaError, metrics: ClientMetrics) => void,
     // event messages
     'event.error': (error: LibrdKafkaError) => void,
-    'event.stats': (eventData: any) => void,
+    'event.stats': (eventData: { message: string }) => void,
     'event.log': (eventData: any) => void,
     'event.event': (eventData: any) => void,
     'event.throttle': (eventData: any) => void,
