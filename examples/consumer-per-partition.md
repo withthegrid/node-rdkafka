@@ -45,9 +45,6 @@ consumer.on('ready', function(arg) {
 
   consumer.subscribe([topicName]);
 
-  // Remove the default timeout so that we won't wait on each consume
-  consumer.setDefaultConsumeTimeout(0);
-
   // start a regular consume loop in flowing mode. This won't result in any
   // messages because will we start consuming from a partition directly.
   // This is required to serve the rebalancing events
@@ -59,7 +56,7 @@ consumer.on('rebalance', function(err, updatedAssignments) {
   console.log('rebalancing done, got partitions assigned: ', updatedAssignments.map(function(a) {
     return a.partition;
   }));
-  
+
   // Normally messages are forwarded to a general queue, which contains messages from all assigned partitions.
   // however we want to consume per partitions, for this we need to disable forwarding.
   updatedAssignments.forEach(function (assignment) {

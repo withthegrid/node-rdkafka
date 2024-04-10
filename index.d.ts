@@ -204,8 +204,10 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     constructor(conf: ConsumerGlobalConfig, topicConf: ConsumerTopicConfig);
 
     assign(assignments: Assignment[]): this;
+    incrementalAssign(assignments: Assignment[]): this;
 
     assignments(): Assignment[];
+    rebalanceProtocol(): 'NONE' | 'COOPERATIVE' | 'EAGER' | null;
 
     commit(topicPartition: TopicPartitionOffset | TopicPartitionOffset[]): this;
     commit(): this;
@@ -247,6 +249,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     subscription(): string[];
 
     unassign(): this;
+    incrementalUnassign(assignments: Assignment[]): this;
 
     unsubscribe(): this;
 
