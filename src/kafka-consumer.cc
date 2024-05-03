@@ -1396,6 +1396,7 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
       Nan::Utf8String topicUTF8(Nan::To<v8::String>(info[2]).ToLocalChecked());
       std::string topic_name(*topicUTF8);
 
+      // Parse partition
       v8::Local<v8::Number> partitionNumber = info[3].As<v8::Number>();
       Nan::Maybe<uint32_t> partitionMaybe = Nan::To<uint32_t>(partitionNumber);  // NOLINT
 
@@ -1406,12 +1407,22 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
         partition = partitionMaybe.FromJust();
       }
 
+      // Parse onlyApplyTimeoutToFirstMessage
+      Nan::Maybe<bool> onlyApplyTimeoutToFirstMessageMaybe = Nan::To<bool>(info[5].As<v8::Boolean>());  // NOLINT
+
+      bool only_apply_timeout_to_first_message;
+      if (onlyApplyTimeoutToFirstMessageMaybe.IsNothing()) {
+        return Nan::ThrowError("OnlyApplyTimeoutToFirstMessage must be boolean");
+      } else {
+        only_apply_timeout_to_first_message = onlyApplyTimeoutToFirstMessageMaybe.FromJust();
+      }
+
       KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
       v8::Local<v8::Function> cb = info[4].As<v8::Function>();
       Nan::Callback *callback = new Nan::Callback(cb);
       Nan::AsyncQueueWorker(
-        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms));  // NOLINT
+        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms, only_apply_timeout_to_first_message));  // NOLINT
     } else {
       if (!info[2]->IsFunction()) {
         return Nan::ThrowError("Need to specify a callback");

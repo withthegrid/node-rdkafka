@@ -221,6 +221,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     committed(toppars: TopicPartition[], timeout: number, cb: (err: LibrdKafkaError | null | undefined, topicPartitions: TopicPartitionOffset[]) => void): this;
     committed(timeout: number, cb: (err: LibrdKafkaError | null | undefined, topicPartitions: TopicPartitionOffset[]) => void): this;
 
+    consumeFromToppar(topic: string, partition: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void, options?: { numberOfMessages?: number; timeoutMs?: number; onlyApplyTimeoutToFirstMessage?: boolean; } ): void;
     consume(number: number, topic: string, partition: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
     consume(number: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
     consume(cb: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
