@@ -435,7 +435,7 @@ class KafkaConsumerSeek : public ErrorAwareWorker {
 class KafkaConsumerConsumeNumOfPartition : public ErrorAwareWorker {
  public:
   KafkaConsumerConsumeNumOfPartition(Nan::Callback*, NodeKafka::KafkaConsumer*,
-    const uint32_t &, const std::string, const uint32_t &, const int &, const bool &);
+    const uint32_t &, const std::string, const uint32_t &, const int &, const bool);
   ~KafkaConsumerConsumeNumOfPartition();
 
   void Execute();
