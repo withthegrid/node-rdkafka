@@ -799,7 +799,7 @@ KafkaConsumerConsumeNumOfPartition::KafkaConsumerConsumeNumOfPartition(Nan::Call
                                      const std::string topic,
                                      const uint32_t & partition,
                                      const int & timeout_ms,
-                                     const bool & only_apply_timeout_to_first_message) :
+                                     const bool only_apply_timeout_to_first_message) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_num_messages(num_messages),
