@@ -851,8 +851,8 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
     RdKafka::Message *message = queue->consume(timeout_ms);
     RdKafka::ErrorCode errorCode = message->err();
 
-    // Only wait for the first message. otherwise just fetch the current queue
-    // This allows getting ready messages, while not waiting for new ones
+    // If true, do not wait after the first message. This will cause to consume
+    // only what has also been fetched and then return immediately
     if (m_only_apply_timeout_to_first_message) {
       timeout_ms = 1;
     }
