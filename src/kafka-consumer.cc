@@ -1412,7 +1412,7 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
       bool only_apply_timeout_to_first_message;
       if (onlyApplyTimeoutToFirstMessageMaybe.IsNothing()) {
-        return Nan::ThrowError("OnlyApplyTimeoutToFirstMessage must be boolean");
+        only_apply_timeout_to_first_message = false;
       } else {
         only_apply_timeout_to_first_message = onlyApplyTimeoutToFirstMessageMaybe.FromJust();
       }
