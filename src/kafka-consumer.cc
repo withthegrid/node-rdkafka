@@ -1408,13 +1408,9 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
       }
 
       // Parse onlyApplyTimeoutToFirstMessage
-      Nan::Maybe<bool> onlyApplyTimeoutToFirstMessageMaybe = Nan::To<bool>(info[5].As<v8::Boolean>());  // NOLINT
-
       bool only_apply_timeout_to_first_message;
-      if (onlyApplyTimeoutToFirstMessageMaybe.IsNothing()) {
+      if (!Nan::To<bool>(info[5]).To(&only_apply_timeout_to_first_message)) {
         only_apply_timeout_to_first_message = false;
-      } else {
-        only_apply_timeout_to_first_message = onlyApplyTimeoutToFirstMessageMaybe.FromJust();
       }
 
       KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
