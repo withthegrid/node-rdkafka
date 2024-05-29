@@ -1,5 +1,5 @@
 {
-  "name": "node-rdkafka-imhoff",
+  "name": "node-rdkafka",
   "version": "2.18.8",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "2.3.0",
@@ -35,7 +35,7 @@
     "jsdoc": "^3.4.0",
     "jshint": "^2.10.1",
     "mocha": "^10.2.0",
-    "node-gyp": "^9.3.1",
+    "node-gyp": "^10.0.0",
     "toolkit-jsdoc": "^1.0.0"
   },
   "dependencies": {
