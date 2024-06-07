@@ -14,6 +14,7 @@
         'src/config.cc',
         'src/connection.cc',
         'src/errors.cc',
+        'src/queue-callback.cc',
         'src/kafka-consumer.cc',
         'src/producer.cc',
         'src/topic.cc',

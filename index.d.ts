@@ -205,7 +205,10 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     assign(assignments: Assignment[]): this;
     incrementalAssign(assignments: Assignment[]): this;
-
+    
+    addQueueNotEmptyCallback(topicPartition: TopicPartition, cb: () => void): this;
+    removeQueueNotEmptyCallback(topicPartition: TopicPartition, cb: () => void): this;
+    
     assignments(): Assignment[];
     rebalanceProtocol(): 'NONE' | 'COOPERATIVE' | 'EAGER' | null;
 
