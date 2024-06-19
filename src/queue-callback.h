@@ -28,35 +28,23 @@ class KafkaConsumer;
 
 namespace QueueCallbacks {
 
-struct CompareTopicPartition
-{
-    bool operator()(RdKafka::TopicPartition *lhs, RdKafka::TopicPartition *rhs) const
-    {
-      int topic_compare = lhs->topic().compare(rhs->topic());
-      if (topic_compare != 0) {
-        return topic_compare < 0;
-      }
-      return lhs->partition() < rhs->partition();
-    }
-};
-
 class QueueDispatcher {
  public:
   QueueDispatcher();
   ~QueueDispatcher();
-  void Dispatch(RdKafka::TopicPartition * toppar);
-  void AddCallback(RdKafka::TopicPartition * toppar, const v8::Local<v8::Function>&);
-  void RemoveCallback(RdKafka::TopicPartition * toppar, const v8::Local<v8::Function>&);
-  bool HasCallbacks(RdKafka::TopicPartition * toppar);
+  void Dispatch(rd_kafka_queue_t * rkqu);
+  void AddCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function>&);
+  void RemoveCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function>&);
+  bool HasCallbacks(rd_kafka_queue_t * rkqu);
   void Execute();
   void Activate();
   void Deactivate();
-  void Add(RdKafka::TopicPartition *);
+  void Add(rd_kafka_queue_t *);
   void Flush();
 
  protected:
-  std::map<RdKafka::TopicPartition*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >, CompareTopicPartition> queue_event_toppar_callbacks;
-  std::vector<RdKafka::TopicPartition*> events;
+  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >> queue_event_rkqu_callbacks;
+  std::vector<rd_kafka_queue_t*> events;
 
   uv_mutex_t async_lock;
 
@@ -73,10 +61,10 @@ class QueueDispatcher {
 
 class QueueEventCallbackOpaque {
   public:
-    QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, RdKafka::TopicPartition *_toppar);
+    QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, rd_kafka_queue_t *_rkqu);
     ~QueueEventCallbackOpaque();
     QueueDispatcher *dispatcher;
-    RdKafka::TopicPartition *toppar;
+    rd_kafka_queue_t *rkqu;
 };
 
 }  // namespace QueueCallbacks

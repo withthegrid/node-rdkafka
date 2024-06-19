@@ -20,10 +20,10 @@ QueueDispatcher::QueueDispatcher() {
 }
 
 QueueDispatcher::~QueueDispatcher() {
-  if (queue_event_toppar_callbacks.size() < 1) return;
+  if (queue_event_rkqu_callbacks.size() < 1) return;
 
-  std::map<RdKafka::TopicPartition*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >, CompareTopicPartition>::iterator it;
-  for (it = queue_event_toppar_callbacks.begin(); it != queue_event_toppar_callbacks.end(); it++) {
+  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it;
+  for (it = queue_event_rkqu_callbacks.begin(); it != queue_event_rkqu_callbacks.end(); it++) {
     for (size_t i=0; i < it->second.size(); i++) {
       it->second[i].Reset();
     }
@@ -50,10 +50,10 @@ void QueueDispatcher::Deactivate() {
   }
 }
 
-bool QueueDispatcher::HasCallbacks(RdKafka::TopicPartition * toppar) {
-  std::map<RdKafka::TopicPartition*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >, CompareTopicPartition>::iterator it =
-          queue_event_toppar_callbacks.find(toppar);
-  if (it != queue_event_toppar_callbacks.end()) {
+bool QueueDispatcher::HasCallbacks(rd_kafka_queue_t * rkqu) {
+  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
+          queue_event_rkqu_callbacks.find(rkqu);
+  if (it != queue_event_rkqu_callbacks.end()) {
     return it->second.size() > 0;
   }
   return false;
@@ -65,11 +65,11 @@ void QueueDispatcher::Execute() {
   }
 }
 
-void QueueDispatcher::Dispatch(RdKafka::TopicPartition * toppar) {
-  std::map<RdKafka::TopicPartition*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >, CompareTopicPartition>::iterator it =
-          queue_event_toppar_callbacks.find(toppar);
+void QueueDispatcher::Dispatch(rd_kafka_queue_t * rkqu) {
+  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
+          queue_event_rkqu_callbacks.find(rkqu);
 
-  if (it != queue_event_toppar_callbacks.end()) {
+  if (it != queue_event_rkqu_callbacks.end()) {
     for (size_t i=0; i < it->second.size(); i++) {
       v8::Local<v8::Function> f = Nan::New<v8::Function>(it->second[i]);
       Nan::Callback cb(f);
@@ -78,18 +78,18 @@ void QueueDispatcher::Dispatch(RdKafka::TopicPartition * toppar) {
   }
 }
 
-void QueueDispatcher::AddCallback(RdKafka::TopicPartition * toppar, const v8::Local<v8::Function> &cb) {
+void QueueDispatcher::AddCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function> &cb) {
   Nan::Persistent<v8::Function,
                   Nan::CopyablePersistentTraits<v8::Function> > value(cb);
   // PersistentCopyableFunction value(func);
-  queue_event_toppar_callbacks[toppar].push_back(value);
+  queue_event_rkqu_callbacks[rkqu].push_back(value);
 }
 
-void QueueDispatcher::RemoveCallback(RdKafka::TopicPartition * toppar, const v8::Local<v8::Function> &cb) {
-  std::map<RdKafka::TopicPartition*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >, CompareTopicPartition>::iterator it =
-          queue_event_toppar_callbacks.find(toppar);
+void QueueDispatcher::RemoveCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function> &cb) {
+  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
+          queue_event_rkqu_callbacks.find(rkqu);
 
-  if (it != queue_event_toppar_callbacks.end()) {
+  if (it != queue_event_rkqu_callbacks.end()) {
     for (size_t i=0; i < it->second.size(); i++) {
       if (it->second[i] == cb) {
         it->second[i].Reset();
@@ -98,12 +98,12 @@ void QueueDispatcher::RemoveCallback(RdKafka::TopicPartition * toppar, const v8:
       }
     }
     if (it->second.size() == 0) {
-      queue_event_toppar_callbacks.erase(toppar);
+      queue_event_rkqu_callbacks.erase(rkqu);
     }
   }
 }
 
-void QueueDispatcher::Add(RdKafka::TopicPartition * e) {
+void QueueDispatcher::Add(rd_kafka_queue_t * e) {
   scoped_mutex_lock lock(async_lock);
   events.push_back(e);
 }
@@ -115,7 +115,7 @@ void QueueDispatcher::Flush() {
   // then
   if (events.size() < 1) return;
 
-  std::vector<RdKafka::TopicPartition*> _events;
+  std::vector<rd_kafka_queue_t*> _events;
   {
     scoped_mutex_lock lock(async_lock);
     events.swap(_events);
@@ -126,9 +126,9 @@ void QueueDispatcher::Flush() {
   }
 }
 
-QueueEventCallbackOpaque::QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, RdKafka::TopicPartition *_toppar) {
+QueueEventCallbackOpaque::QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, rd_kafka_queue_t *_rkqu) {
   dispatcher = _dispatcher;
-  toppar = _toppar;
+  rkqu = _rkqu;
 }
 
 QueueEventCallbackOpaque::~QueueEventCallbackOpaque() {}

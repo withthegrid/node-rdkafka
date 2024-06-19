@@ -41,13 +41,9 @@ KafkaConsumer::~KafkaConsumer() {
   // We only want to run this if it hasn't been run already
   Disconnect();
   queue_dispatcher.Deactivate();
-  std::map<RdKafka::TopicPartition*, QueueCallbacks::QueueEventCallbackOpaque *, QueueCallbacks::CompareTopicPartition>::iterator it;
+  std::map<rd_kafka_queue_t*, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it;
   for (it = queue_dispatcher_opaques.begin(); it != queue_dispatcher_opaques.end(); it++) {
-    rd_kafka_queue_t *rkqu = NULL;
-    rkqu = rd_kafka_queue_get_partition(m_client->c_ptr(), it->first->topic().c_str(), it->first->partition());
-    if (rkqu != NULL) {
-      rd_kafka_queue_cb_event_enable(rkqu, NULL, NULL);
-    }
+    rd_kafka_queue_cb_event_enable(it->first, NULL, NULL);
     this->queue_dispatcher_opaques.erase(it->first);
     delete it->second;
   }
@@ -381,22 +377,22 @@ Baton KafkaConsumer::ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition * to
     return Baton(RdKafka::ERR__STATE,
       "TopicPartition has an invalid queue.");
   }
-  bool hadCallbacks = this->queue_dispatcher.HasCallbacks(toppar);
+  bool hadCallbacks = this->queue_dispatcher.HasCallbacks(rkqu);
   if (add) {
-    this->queue_dispatcher.AddCallback(toppar, cb);
+    this->queue_dispatcher.AddCallback(rkqu, cb);
   } else {
-    this->queue_dispatcher.RemoveCallback(toppar, cb);
+    this->queue_dispatcher.RemoveCallback(rkqu, cb);
   }
-  bool hasCallbacks = this->queue_dispatcher.HasCallbacks(toppar);
+  bool hasCallbacks = this->queue_dispatcher.HasCallbacks(rkqu);
   if (!hadCallbacks && hasCallbacks) {
-    QueueCallbacks::QueueEventCallbackOpaque * opaque = new QueueCallbacks::QueueEventCallbackOpaque(&this->queue_dispatcher, toppar);
-    this->queue_dispatcher_opaques[toppar] = opaque;
+    QueueCallbacks::QueueEventCallbackOpaque * opaque = new QueueCallbacks::QueueEventCallbackOpaque(&this->queue_dispatcher, rkqu);
+    this->queue_dispatcher_opaques[rkqu] = opaque;
     rd_kafka_queue_cb_event_enable(rkqu, foreign_thread_queue_event_cb, (void *) opaque);
   } else if (hadCallbacks && !hasCallbacks){
-    std::map<RdKafka::TopicPartition*, QueueCallbacks::QueueEventCallbackOpaque *, QueueCallbacks::CompareTopicPartition>::iterator it = this->queue_dispatcher_opaques.find(toppar);
+    std::map<rd_kafka_queue_t*, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it = this->queue_dispatcher_opaques.find(rkqu);
     if (it != this->queue_dispatcher_opaques.end()) {
       delete it->second;
-      this->queue_dispatcher_opaques.erase(toppar);
+      this->queue_dispatcher_opaques.erase(rkqu);
     }
     rd_kafka_queue_cb_event_enable(rkqu, NULL, NULL);
   }
@@ -1259,6 +1255,10 @@ NAN_METHOD(KafkaConsumer::NodeConfigureQueueNotEmptyCallback) {
     return Nan::ThrowError("Topic partition must be an object");
   }
 
+  if (!info[1]->IsFunction()) {
+    return Nan::ThrowError("Callback must be a function");
+  }
+
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   RdKafka::TopicPartition * toppar =
@@ -1268,15 +1268,13 @@ NAN_METHOD(KafkaConsumer::NodeConfigureQueueNotEmptyCallback) {
     return Nan::ThrowError("Invalid topic partition provided");
   }
 
-  if (!info[1]->IsFunction()) {
-    return Nan::ThrowError("Callback must be a function");
-  }
-
   v8::Local<v8::Function> callback = info[1].As<v8::Function>();
 
   const bool add = Nan::To<bool>(info[2]).ToChecked();
 
   Baton b = consumer->ConfigureQueueNotEmptyCallback(toppar, callback, add);
+
+  delete toppar;
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
