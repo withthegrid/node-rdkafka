@@ -20,10 +20,10 @@ QueueDispatcher::QueueDispatcher() {
 }
 
 QueueDispatcher::~QueueDispatcher() {
-  if (queue_event_rkqu_callbacks.size() < 1) return;
+  if (queue_event_callbacks.size() < 1) return;
 
-  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it;
-  for (it = queue_event_rkqu_callbacks.begin(); it != queue_event_rkqu_callbacks.end(); it++) {
+  std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it;
+  for (it = queue_event_callbacks.begin(); it != queue_event_callbacks.end(); it++) {
     for (size_t i=0; i < it->second.size(); i++) {
       it->second[i].Reset();
     }
@@ -50,10 +50,10 @@ void QueueDispatcher::Deactivate() {
   }
 }
 
-bool QueueDispatcher::HasCallbacks(rd_kafka_queue_t * rkqu) {
-  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
-          queue_event_rkqu_callbacks.find(rkqu);
-  if (it != queue_event_rkqu_callbacks.end()) {
+bool QueueDispatcher::HasCallbacks(std::string key) {
+  std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
+          queue_event_callbacks.find(key);
+  if (it != queue_event_callbacks.end()) {
     return it->second.size() > 0;
   }
   return false;
@@ -65,11 +65,11 @@ void QueueDispatcher::Execute() {
   }
 }
 
-void QueueDispatcher::Dispatch(rd_kafka_queue_t * rkqu) {
-  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
-          queue_event_rkqu_callbacks.find(rkqu);
+void QueueDispatcher::Dispatch(std::string key) {
+  std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
+          queue_event_callbacks.find(key);
 
-  if (it != queue_event_rkqu_callbacks.end()) {
+  if (it != queue_event_callbacks.end()) {
     for (size_t i=0; i < it->second.size(); i++) {
       v8::Local<v8::Function> f = Nan::New<v8::Function>(it->second[i]);
       Nan::Callback cb(f);
@@ -78,18 +78,18 @@ void QueueDispatcher::Dispatch(rd_kafka_queue_t * rkqu) {
   }
 }
 
-void QueueDispatcher::AddCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function> &cb) {
+void QueueDispatcher::AddCallback(std::string key, const v8::Local<v8::Function> &cb) {
   Nan::Persistent<v8::Function,
                   Nan::CopyablePersistentTraits<v8::Function> > value(cb);
   // PersistentCopyableFunction value(func);
-  queue_event_rkqu_callbacks[rkqu].push_back(value);
+  queue_event_callbacks[key].push_back(value);
 }
 
-void QueueDispatcher::RemoveCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function> &cb) {
-  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
-          queue_event_rkqu_callbacks.find(rkqu);
+void QueueDispatcher::RemoveCallback(std::string key, const v8::Local<v8::Function> &cb) {
+  std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
+          queue_event_callbacks.find(key);
 
-  if (it != queue_event_rkqu_callbacks.end()) {
+  if (it != queue_event_callbacks.end()) {
     for (size_t i=0; i < it->second.size(); i++) {
       if (it->second[i] == cb) {
         it->second[i].Reset();
@@ -98,14 +98,14 @@ void QueueDispatcher::RemoveCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8
       }
     }
     if (it->second.size() == 0) {
-      queue_event_rkqu_callbacks.erase(rkqu);
+      queue_event_callbacks.erase(key);
     }
   }
 }
 
-void QueueDispatcher::Add(rd_kafka_queue_t * e) {
+void QueueDispatcher::Add(std::string key) {
   scoped_mutex_lock lock(async_lock);
-  events.push_back(e);
+  events.push_back(key);
 }
 
 void QueueDispatcher::Flush() {
@@ -115,7 +115,7 @@ void QueueDispatcher::Flush() {
   // then
   if (events.size() < 1) return;
 
-  std::vector<rd_kafka_queue_t*> _events;
+  std::vector<std::string> _events;
   {
     scoped_mutex_lock lock(async_lock);
     events.swap(_events);
@@ -126,9 +126,9 @@ void QueueDispatcher::Flush() {
   }
 }
 
-QueueEventCallbackOpaque::QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, rd_kafka_queue_t *_rkqu) {
+QueueEventCallbackOpaque::QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, std::string _key) {
   dispatcher = _dispatcher;
-  rkqu = _rkqu;
+  key = _key;
 }
 
 QueueEventCallbackOpaque::~QueueEventCallbackOpaque() {}

@@ -15,7 +15,6 @@
 #include <vector>
 #include <map>
 
-#include "rdkafkacpp.h"
 #include "src/common.h"
 
 typedef Nan::Persistent<v8::Function,
@@ -32,19 +31,19 @@ class QueueDispatcher {
  public:
   QueueDispatcher();
   ~QueueDispatcher();
-  void Dispatch(rd_kafka_queue_t * rkqu);
-  void AddCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function>&);
-  void RemoveCallback(rd_kafka_queue_t * rkqu, const v8::Local<v8::Function>&);
-  bool HasCallbacks(rd_kafka_queue_t * rkqu);
+  void Dispatch(std::string key);
+  void AddCallback(std::string key, const v8::Local<v8::Function>&);
+  void RemoveCallback(std::string key, const v8::Local<v8::Function>&);
+  bool HasCallbacks(std::string key);
   void Execute();
   void Activate();
   void Deactivate();
-  void Add(rd_kafka_queue_t *);
+  void Add(std::string);
   void Flush();
 
  protected:
-  std::map<rd_kafka_queue_t*, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >> queue_event_rkqu_callbacks;
-  std::vector<rd_kafka_queue_t*> events;
+  std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >> queue_event_callbacks;
+  std::vector<std::string> events;
 
   uv_mutex_t async_lock;
 
@@ -61,10 +60,10 @@ class QueueDispatcher {
 
 class QueueEventCallbackOpaque {
   public:
-    QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, rd_kafka_queue_t *_rkqu);
+    QueueEventCallbackOpaque(QueueDispatcher *_dispatcher, std::string _key);
     ~QueueEventCallbackOpaque();
     QueueDispatcher *dispatcher;
-    rd_kafka_queue_t *rkqu;
+    std::string key;
 };
 
 }  // namespace QueueCallbacks

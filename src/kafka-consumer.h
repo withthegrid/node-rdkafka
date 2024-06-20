@@ -92,12 +92,12 @@ class KafkaConsumer : public Connection {
   Baton Consume(int timeout_ms);
 
   QueueCallbacks::QueueDispatcher queue_dispatcher;
-  std::map<rd_kafka_queue_t*, QueueCallbacks::QueueEventCallbackOpaque *> queue_dispatcher_opaques;
+  std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *> queue_dispatcher_opaques;
 
 
   static void foreign_thread_queue_event_cb(rd_kafka_t *rk_p, void *opaque) {
     QueueCallbacks::QueueEventCallbackOpaque *qe = static_cast<QueueCallbacks::QueueEventCallbackOpaque*>(opaque);
-    qe->dispatcher->Add(qe->rkqu);
+    qe->dispatcher->Add(qe->key);
     qe->dispatcher->Execute();
   }
 

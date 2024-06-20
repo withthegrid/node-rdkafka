@@ -41,12 +41,12 @@ KafkaConsumer::~KafkaConsumer() {
   // We only want to run this if it hasn't been run already
   Disconnect();
   queue_dispatcher.Deactivate();
-  std::map<rd_kafka_queue_t*, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it;
+
+  std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it;
   for (it = queue_dispatcher_opaques.begin(); it != queue_dispatcher_opaques.end(); it++) {
-    rd_kafka_queue_cb_event_enable(it->first, NULL, NULL);
-    this->queue_dispatcher_opaques.erase(it->first);
     delete it->second;
   }
+  queue_dispatcher_opaques.clear();
 }
 
 Baton KafkaConsumer::Connect() {
@@ -377,25 +377,29 @@ Baton KafkaConsumer::ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition * to
     return Baton(RdKafka::ERR__STATE,
       "TopicPartition has an invalid queue.");
   }
-  bool hadCallbacks = this->queue_dispatcher.HasCallbacks(rkqu);
+
+  std::string key = std::to_string(toppar->partition())+"-"+toppar->topic();
+
+  bool hadCallbacks = this->queue_dispatcher.HasCallbacks(key);
   if (add) {
-    this->queue_dispatcher.AddCallback(rkqu, cb);
+    this->queue_dispatcher.AddCallback(key, cb);
   } else {
-    this->queue_dispatcher.RemoveCallback(rkqu, cb);
+    this->queue_dispatcher.RemoveCallback(key, cb);
   }
-  bool hasCallbacks = this->queue_dispatcher.HasCallbacks(rkqu);
+  bool hasCallbacks = this->queue_dispatcher.HasCallbacks(key);
   if (!hadCallbacks && hasCallbacks) {
-    QueueCallbacks::QueueEventCallbackOpaque * opaque = new QueueCallbacks::QueueEventCallbackOpaque(&this->queue_dispatcher, rkqu);
-    this->queue_dispatcher_opaques[rkqu] = opaque;
+    QueueCallbacks::QueueEventCallbackOpaque * opaque = new QueueCallbacks::QueueEventCallbackOpaque(&this->queue_dispatcher, key);
+    this->queue_dispatcher_opaques[key] = opaque;
     rd_kafka_queue_cb_event_enable(rkqu, foreign_thread_queue_event_cb, (void *) opaque);
   } else if (hadCallbacks && !hasCallbacks){
-    std::map<rd_kafka_queue_t*, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it = this->queue_dispatcher_opaques.find(rkqu);
+    std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it = this->queue_dispatcher_opaques.find(key);
     if (it != this->queue_dispatcher_opaques.end()) {
       delete it->second;
-      this->queue_dispatcher_opaques.erase(rkqu);
+      this->queue_dispatcher_opaques.erase(key);
     }
     rd_kafka_queue_cb_event_enable(rkqu, NULL, NULL);
   }
+  rd_kafka_queue_destroy(rkqu);
 
   return Baton(RdKafka::ERR_NO_ERROR);
 }
