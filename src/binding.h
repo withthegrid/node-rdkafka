@@ -17,6 +17,7 @@
 #include "src/errors.h"
 #include "src/config.h"
 #include "src/connection.h"
+#include "src/queue-callback.h"
 #include "src/kafka-consumer.h"
 #include "src/producer.h"
 #include "src/topic.h"

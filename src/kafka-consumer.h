@@ -21,6 +21,7 @@
 #include "src/common.h"
 #include "src/connection.h"
 #include "src/callbacks.h"
+#include "src/queue-callback.h"
 
 namespace NodeKafka {
 
@@ -83,10 +84,22 @@ class KafkaConsumer : public Connection {
 
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
 
+  Baton ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition*, v8::Local<v8::Function>&, bool);
+
   std::string Name();
 
   Baton Subscribe(std::vector<std::string>);
   Baton Consume(int timeout_ms);
+
+  QueueCallbacks::QueueDispatcher queue_dispatcher;
+  std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *> queue_dispatcher_opaques;
+
+
+  static void foreign_thread_queue_event_cb(rd_kafka_t *rk_p, void *opaque) {
+    QueueCallbacks::QueueEventCallbackOpaque *qe = static_cast<QueueCallbacks::QueueEventCallbackOpaque*>(opaque);
+    qe->dispatcher->Add(qe->key);
+    qe->dispatcher->Execute();
+  }
 
   void ActivateDispatchers();
   void DeactivateDispatchers();
@@ -126,6 +139,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodePosition);
   static NAN_METHOD(NodeSubscription);
   static NAN_METHOD(NodeSeek);
+  static NAN_METHOD(NodeConfigureQueueNotEmptyCallback);
   static NAN_METHOD(NodeGetWatermarkOffsets);
   static NAN_METHOD(NodeConsumeLoop);
   static NAN_METHOD(NodeConsume);
