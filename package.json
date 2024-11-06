@@ -1,8 +1,8 @@
 {
   "name": "node-rdkafka-imhoff",
-  "version": "2.18.11",
+  "version": "v3.1.1",
   "description": "Node.js bindings for librdkafka",
-  "librdkafka": "2.3.0",
+  "librdkafka": "2.5.3",
   "main": "lib/index.js",
   "scripts": {
     "configure": "node-gyp configure",
@@ -32,10 +32,10 @@
   "license": "MIT",
   "devDependencies": {
     "bluebird": "^3.5.3",
-    "jsdoc": "^3.4.0",
+    "jsdoc": "^4.0.2",
     "jshint": "^2.10.1",
     "mocha": "^10.2.0",
-    "node-gyp": "^10.0.0",
+    "node-gyp": "^10.1.0",
     "toolkit-jsdoc": "^1.0.0"
   },
   "dependencies": {
@@ -43,6 +43,6 @@
     "nan": "^2.22.0"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=16"
   }
 }

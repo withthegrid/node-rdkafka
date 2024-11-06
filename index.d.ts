@@ -117,6 +117,7 @@ export interface ReadStreamOptions extends ReadableOptions {
     autoClose?: boolean;
     streamAsBatch?: boolean;
     connectOptions?: any;
+    initOauthBearerToken?: string;
 }
 
 export interface WriteStreamOptions extends WritableOptions {
@@ -137,12 +138,13 @@ export interface ProducerStream extends Writable {
 export interface ConsumerStream extends Readable {
     consumer: KafkaConsumer;
     connect(options: ConsumerGlobalConfig): void;
+    refreshOauthBearerToken(tokenStr: string): void;
     close(cb?: () => void): void;
 }
 
-type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'event.error' | 'event.stats' | 'event.log' | 'event.event' | 'event.throttle';
-type KafkaConsumerEvents = 'data' | 'partition.eof' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
-type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
+export type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'event.error' | 'event.stats' | 'event.log' | 'event.event' | 'event.throttle';
+export type KafkaConsumerEvents = 'data' | 'partition.eof' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
+export type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
 
 type EventListenerMap = {
     // ### Client
@@ -179,6 +181,8 @@ export abstract class Client<Events extends string> extends EventEmitter {
     constructor(globalConf: GlobalConfig, SubClientType: any, topicConf: TopicConfig);
 
     connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError | null, data: Metadata) => any): this;
+
+    setOauthBearerToken(tokenStr: string): this;
 
     getClient(): any;
 
@@ -219,7 +223,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     commitMessageSync(msg: TopicPartitionOffset): this;
 
-    commitSync(topicPartition: TopicPartitionOffset | TopicPartitionOffset[]): this;
+    commitSync(topicPartition: TopicPartitionOffset | TopicPartitionOffset[] | null): this;
 
     committed(toppars: TopicPartition[], timeout: number, cb: (err: LibrdKafkaError | null | undefined, topicPartitions: TopicPartitionOffset[]) => void): this;
     committed(timeout: number, cb: (err: LibrdKafkaError | null | undefined, topicPartitions: TopicPartitionOffset[]) => void): this;
@@ -340,6 +344,8 @@ export interface NewTopic {
 }
 
 export interface IAdminClient {
+    refreshOauthBearerToken(tokenStr: string): void;
+
     createTopic(topic: NewTopic, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
     createTopic(topic: NewTopic, timeout?: number, cb?: (err: LibrdKafkaError | null | undefined) => void): void;
 
@@ -353,5 +359,5 @@ export interface IAdminClient {
 }
 
 export abstract class AdminClient {
-    static create(conf: GlobalConfig): IAdminClient;
+    static create(conf: GlobalConfig, initOauthBearerToken?: string): IAdminClient;
 }
