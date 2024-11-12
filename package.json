@@ -1,5 +1,5 @@
 {
-  "name": "node-rdkafka-imhoff",
+  "name": "node-rdkafka-imhoff-segfault",
   "version": "3.1.4",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "2.5.3",
