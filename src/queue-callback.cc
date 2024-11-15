@@ -34,7 +34,6 @@ QueueDispatcher::~QueueDispatcher() {
 
 // Only run this if we aren't already listening
 void QueueDispatcher::Activate() {
-  scoped_mutex_lock lock(async_lock);
   if (!async) {
     async = new uv_async_t();
     uv_async_init(uv_default_loop(), async, AsyncMessage_);
@@ -45,7 +44,6 @@ void QueueDispatcher::Activate() {
 
 // Should be able to run this regardless of whether it is active or not
 void QueueDispatcher::Deactivate() {
-  scoped_mutex_lock lock(async_lock);
   if (async) {
     // The Deactivate method may leave dangling pointers if uv_close 
     // does not fully clean up async before it is set to NULL:
@@ -97,7 +95,8 @@ void QueueDispatcher::RemoveCallback(std::string key, const v8::Local<v8::Functi
 
   if (it != queue_event_callbacks.end()) {
     for (size_t i=0; i < it->second.size(); i++) {
-      if (it->second[i] == cb) {
+      // Convert the Persistent handle to a Local handle for comparison with Nan::New
+      if (Nan::New(it->second[i]) == cb) {
         it->second[i].Reset();
         it->second.erase(it->second.begin() + i);
         break;
