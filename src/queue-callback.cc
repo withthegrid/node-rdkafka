@@ -34,8 +34,9 @@ QueueDispatcher::~QueueDispatcher() {
 
 // Only run this if we aren't already listening
 void QueueDispatcher::Activate() {
+  scoped_mutex_lock lock(async_lock);
   if (!async) {
-    async = new uv_async_t;
+    async = new uv_async_t();
     uv_async_init(uv_default_loop(), async, AsyncMessage_);
 
     async->data = this;
@@ -44,8 +45,13 @@ void QueueDispatcher::Activate() {
 
 // Should be able to run this regardless of whether it is active or not
 void QueueDispatcher::Deactivate() {
+  scoped_mutex_lock lock(async_lock);
   if (async) {
-    uv_close(reinterpret_cast<uv_handle_t*>(async), NULL);
+    // The Deactivate method may leave dangling pointers if uv_close 
+    // does not fully clean up async before it is set to NULL:
+    uv_close(reinterpret_cast<uv_handle_t*>(async), [](uv_handle_t* handle) {
+      delete reinterpret_cast<uv_async_t*>(handle);
+    });
     async = NULL;
   }
 }
@@ -60,6 +66,7 @@ bool QueueDispatcher::HasCallbacks(std::string key) {
 }
 
 void QueueDispatcher::Execute() {
+  scoped_mutex_lock lock(async_lock);
   if (async) {
     uv_async_send(async);
   }
@@ -81,7 +88,6 @@ void QueueDispatcher::Dispatch(std::string key) {
 void QueueDispatcher::AddCallback(std::string key, const v8::Local<v8::Function> &cb) {
   Nan::Persistent<v8::Function,
                   Nan::CopyablePersistentTraits<v8::Function> > value(cb);
-  // PersistentCopyableFunction value(func);
   queue_event_callbacks[key].push_back(value);
 }
 
