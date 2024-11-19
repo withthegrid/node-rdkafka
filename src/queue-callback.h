@@ -46,6 +46,7 @@ class QueueDispatcher {
   std::vector<std::string> events;
 
   uv_mutex_t async_lock;
+  uv_mutex_t event_lock;
 
  private:
   NAN_INLINE static NAUV_WORK_CB(AsyncMessage_) {

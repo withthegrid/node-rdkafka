@@ -94,7 +94,9 @@ class KafkaConsumer : public Connection {
   QueueCallbacks::QueueDispatcher queue_dispatcher;
   std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *> queue_dispatcher_opaques;
 
-
+  /**
+   * @locality internal librdkafka thread
+   */
   static void foreign_thread_queue_event_cb(rd_kafka_t *rk_p, void *opaque) {
     QueueCallbacks::QueueEventCallbackOpaque *qe = static_cast<QueueCallbacks::QueueEventCallbackOpaque*>(opaque);
     qe->dispatcher->Add(qe->key);
