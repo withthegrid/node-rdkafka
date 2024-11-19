@@ -41,7 +41,7 @@ QueueDispatcher::~QueueDispatcher() {
 void QueueDispatcher::Activate() {
   scoped_mutex_lock lock(async_lock);
   if (!async) {
-    async = new uv_async_t();
+    async = new uv_async_t;
     uv_async_init(uv_default_loop(), async, AsyncMessage_);
 
     async->data = this;
