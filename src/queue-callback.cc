@@ -17,6 +17,7 @@ namespace QueueCallbacks {
 QueueDispatcher::QueueDispatcher() {
   async = NULL;
   uv_mutex_init(&async_lock);
+  uv_mutex_init(&event_lock);
 }
 
 QueueDispatcher::~QueueDispatcher() {
@@ -30,10 +31,15 @@ QueueDispatcher::~QueueDispatcher() {
   }
 
   uv_mutex_destroy(&async_lock);
+  uv_mutex_destroy(&event_lock);
 }
 
-// Only run this if we aren't already listening
+/**
+ * Only run this if we aren't already listening
+ * @locality main thread
+ */
 void QueueDispatcher::Activate() {
+  scoped_mutex_lock lock(async_lock);
   if (!async) {
     async = new uv_async_t();
     uv_async_init(uv_default_loop(), async, AsyncMessage_);
@@ -42,18 +48,22 @@ void QueueDispatcher::Activate() {
   }
 }
 
-// Should be able to run this regardless of whether it is active or not
+
+/**
+ * Should be able to run this regardless of whether it is active or not
+ * @locality main thread
+ */
 void QueueDispatcher::Deactivate() {
+  scoped_mutex_lock lock(async_lock);
   if (async) {
-    // The Deactivate method may leave dangling pointers if uv_close 
-    // does not fully clean up async before it is set to NULL:
-    uv_close(reinterpret_cast<uv_handle_t*>(async), [](uv_handle_t* handle) {
-      delete reinterpret_cast<uv_async_t*>(handle);
-    });
+    uv_close(reinterpret_cast<uv_handle_t*>(async), NULL);
     async = NULL;
   }
 }
 
+/**
+ * @locality main thread
+ */
 bool QueueDispatcher::HasCallbacks(std::string key) {
   std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
           queue_event_callbacks.find(key);
@@ -63,6 +73,9 @@ bool QueueDispatcher::HasCallbacks(std::string key) {
   return false;
 }
 
+/**
+ * @locality internal librdkafka thread
+ */
 void QueueDispatcher::Execute() {
   scoped_mutex_lock lock(async_lock);
   if (async) {
@@ -70,6 +83,9 @@ void QueueDispatcher::Execute() {
   }
 }
 
+/**
+ * @locality main thread
+ */
 void QueueDispatcher::Dispatch(std::string key) {
   std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
           queue_event_callbacks.find(key);
@@ -83,20 +99,25 @@ void QueueDispatcher::Dispatch(std::string key) {
   }
 }
 
+/**
+ * @locality main thread
+ */
 void QueueDispatcher::AddCallback(std::string key, const v8::Local<v8::Function> &cb) {
   Nan::Persistent<v8::Function,
                   Nan::CopyablePersistentTraits<v8::Function> > value(cb);
   queue_event_callbacks[key].push_back(value);
 }
 
+/**
+ * @locality main thread
+ */
 void QueueDispatcher::RemoveCallback(std::string key, const v8::Local<v8::Function> &cb) {
   std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it =
           queue_event_callbacks.find(key);
 
   if (it != queue_event_callbacks.end()) {
     for (size_t i=0; i < it->second.size(); i++) {
-      // Convert the Persistent handle to a Local handle for comparison with Nan::New
-      if (Nan::New(it->second[i]) == cb) {
+      if (it->second[i] == cb) {
         it->second[i].Reset();
         it->second.erase(it->second.begin() + i);
         break;
@@ -108,21 +129,29 @@ void QueueDispatcher::RemoveCallback(std::string key, const v8::Local<v8::Functi
   }
 }
 
+/**
+ * @locality internal librdkafka thread
+ */
 void QueueDispatcher::Add(std::string key) {
-  scoped_mutex_lock lock(async_lock);
+  scoped_mutex_lock lock(event_lock);
   events.push_back(key);
 }
 
+/**
+ * @locality main thread
+ */
 void QueueDispatcher::Flush() {
   Nan::HandleScope scope;
   // Iterate through each of the currently stored events
   // generate a callback object for each, setting to the members
   // then
-  if (events.size() < 1) return;
 
   std::vector<std::string> _events;
   {
-    scoped_mutex_lock lock(async_lock);
+    scoped_mutex_lock lock(event_lock);
+    if (events.size() < 1) {
+      return;
+    }
     events.swap(_events);
   }
 
