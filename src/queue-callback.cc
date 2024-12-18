@@ -15,14 +15,14 @@ namespace NodeKafka {
 namespace QueueCallbacks {
 
 QueueDispatcher::QueueDispatcher() {
-  printf("QueueDispatcher::QueueDispatcher \n");
+  printf("QueueDispatcher is being constructed \n");
   async = NULL;
   uv_mutex_init(&async_lock);
   uv_mutex_init(&event_lock);
 }
 
 QueueDispatcher::~QueueDispatcher() {
-  printf("QueueDispatcher::~QueueDispatcher \n");
+  printf("QueueDispatcher is being destructed \n");
   if (queue_event_callbacks.size() < 1) return;
 
   std::map<std::string, std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > >>::iterator it;
@@ -41,7 +41,6 @@ QueueDispatcher::~QueueDispatcher() {
  * @locality main thread
  */
 void QueueDispatcher::Activate() {
-  printf("QueueDispatcher::Activate \n");
   scoped_mutex_lock lock(async_lock);
   if (!async) {
     async = new uv_async_t;
@@ -57,7 +56,6 @@ void QueueDispatcher::Activate() {
  * @locality main thread
  */
 void QueueDispatcher::Deactivate() {
-  printf("QueueDispatcher::Deactivate \n");
   scoped_mutex_lock lock(async_lock);
   if (async) {
     uv_close(reinterpret_cast<uv_handle_t*>(async), NULL);
