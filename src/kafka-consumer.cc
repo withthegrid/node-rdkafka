@@ -410,12 +410,15 @@ Baton KafkaConsumer::ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition * to
     this->queue_dispatcher_opaques[key] = opaque;
     rd_kafka_queue_cb_event_enable(rkqu, foreign_thread_queue_event_cb, (void *) opaque);
   } else if (hadCallbacks && !hasCallbacks){
+    // first make sure the other thread won't use the callback anymore.
+    rd_kafka_queue_cb_event_enable(rkqu, NULL, NULL);
+
+    // then delete the opaque dispatcher
     std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *>::iterator it = this->queue_dispatcher_opaques.find(key);
     if (it != this->queue_dispatcher_opaques.end()) {
       delete it->second;
       this->queue_dispatcher_opaques.erase(key);
     }
-    rd_kafka_queue_cb_event_enable(rkqu, NULL, NULL);
   }
   rd_kafka_queue_destroy(rkqu);
 
