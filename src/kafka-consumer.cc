@@ -409,7 +409,6 @@ Baton KafkaConsumer::ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition * to
     QueueCallbacks::QueueEventCallbackOpaque * opaque = new QueueCallbacks::QueueEventCallbackOpaque(&this->queue_dispatcher, key);
     this->queue_dispatcher_opaques[key] = opaque;
     rd_kafka_queue_cb_event_enable(rkqu, foreign_thread_queue_event_cb, (void *) opaque);
-    // Do NOT destroy the queue here; it is now managed by the background thread
   } else if (hadCallbacks && !hasCallbacks){
     // first make sure the other thread won't use the callback anymore.
     rd_kafka_queue_cb_event_enable(rkqu, NULL, NULL);
@@ -420,16 +419,11 @@ Baton KafkaConsumer::ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition * to
       delete it->second;
       this->queue_dispatcher_opaques.erase(key);
     }
-    // Only destroy the queue when disabling callbacks
-    rd_kafka_queue_destroy(rkqu);
-  } else {
-    // If nothing changed, just destroy the queue
-    rd_kafka_queue_destroy(rkqu);
   }
+  rd_kafka_queue_destroy(rkqu);
 
   return Baton(RdKafka::ERR_NO_ERROR);
 }
-
 
 Baton KafkaConsumer::Committed(std::vector<RdKafka::TopicPartition*> &toppars,
   int timeout_ms) {
