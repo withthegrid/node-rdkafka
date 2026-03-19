@@ -21,6 +21,7 @@
 #include "src/common.h"
 #include "src/connection.h"
 #include "src/callbacks.h"
+#include "src/queue-callback.h"
 
 namespace NodeKafka {
 
@@ -77,13 +78,29 @@ class KafkaConsumer : public Connection {
   Baton IncrementalAssign(std::vector<RdKafka::TopicPartition*>);
   Baton IncrementalUnassign(std::vector<RdKafka::TopicPartition*>);
 
+  Baton DisableQueueForwarding(RdKafka::TopicPartition*);
+
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
+
+  Baton ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition*, v8::Local<v8::Function>&, bool);
 
   std::string Name();
   std::string RebalanceProtocol();
 
   Baton Subscribe(std::vector<std::string>);
   Baton Consume(int timeout_ms);
+
+  QueueCallbacks::QueueDispatcher queue_dispatcher;
+  std::map<std::string, QueueCallbacks::QueueEventCallbackOpaque *> queue_dispatcher_opaques;
+
+  /**
+   * @locality internal librdkafka thread
+   */
+  static void foreign_thread_queue_event_cb(rd_kafka_t *rk_p, void *opaque) {
+    QueueCallbacks::QueueEventCallbackOpaque *qe = static_cast<QueueCallbacks::QueueEventCallbackOpaque*>(opaque);
+    qe->dispatcher->Add(qe->key);
+    qe->dispatcher->Execute();
+  }
 
   void ActivateDispatchers();
   void DeactivateDispatchers();
@@ -103,7 +120,7 @@ class KafkaConsumer : public Connection {
   bool m_is_subscribed = false;
 
   void* m_consume_loop = nullptr;
-  
+
   // Node methods
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);
@@ -114,6 +131,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeIncrementalUnassign);
   static NAN_METHOD(NodeRebalanceProtocol);
   static NAN_METHOD(NodeAssignments);
+  static NAN_METHOD(NodeDisableQueueForwarding);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeCommit);
   static NAN_METHOD(NodeCommitSync);
@@ -122,6 +140,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodePosition);
   static NAN_METHOD(NodeSubscription);
   static NAN_METHOD(NodeSeek);
+  static NAN_METHOD(NodeConfigureQueueNotEmptyCallback);
   static NAN_METHOD(NodeGetWatermarkOffsets);
   static NAN_METHOD(NodeConsumeLoop);
   static NAN_METHOD(NodeConsume);

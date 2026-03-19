@@ -1,5 +1,5 @@
 {
-  "name": "node-rdkafka",
+  "name": "node-rdkafka-imhoff",
   "version": "v3.6.1",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "2.12.0",
