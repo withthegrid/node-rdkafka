@@ -589,17 +589,6 @@ Baton KafkaConsumer::RefreshAssignments() {
   }
 }
 
-std::string KafkaConsumer::RebalanceProtocol() {
-  if (!IsConnected()) {
-    return std::string("NONE");
-  }
-
-  RdKafka::KafkaConsumer* consumer =
-    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-
-  return consumer->rebalance_protocol();
-}
-
 Baton KafkaConsumer::DisableQueueForwarding(RdKafka::TopicPartition * toppar) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
