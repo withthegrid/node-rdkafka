@@ -133,10 +133,8 @@ export const CODES: { ERRORS: {
   ERR__INVALID_DIFFERENT_RECORD: number,
   /** Broker is going away but client isn't terminating (**-137**) */
   ERR__DESTROY_BROKER: number,
-
   /** End internal error codes (**-100**) */
   ERR__END: number,
-
   /* Kafka broker errors: */
   /** Unknown broker error (**-1**) */
   ERR_UNKNOWN: number,
