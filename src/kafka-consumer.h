@@ -78,8 +78,6 @@ class KafkaConsumer : public Connection {
   Baton IncrementalAssign(std::vector<RdKafka::TopicPartition*>);
   Baton IncrementalUnassign(std::vector<RdKafka::TopicPartition*>);
 
-  std::string RebalanceProtocol();
-
   Baton DisableQueueForwarding(RdKafka::TopicPartition*);
 
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
@@ -87,6 +85,7 @@ class KafkaConsumer : public Connection {
   Baton ConfigureQueueNotEmptyCallback(RdKafka::TopicPartition*, v8::Local<v8::Function>&, bool);
 
   std::string Name();
+  std::string RebalanceProtocol();
 
   Baton Subscribe(std::vector<std::string>);
   Baton Consume(int timeout_ms);
@@ -130,8 +129,8 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeUnassign);
   static NAN_METHOD(NodeIncrementalAssign);
   static NAN_METHOD(NodeIncrementalUnassign);
-  static NAN_METHOD(NodeAssignments);
   static NAN_METHOD(NodeRebalanceProtocol);
+  static NAN_METHOD(NodeAssignments);
   static NAN_METHOD(NodeDisableQueueForwarding);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeCommit);

@@ -209,10 +209,10 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     assign(assignments: Assignment[]): this;
     incrementalAssign(assignments: Assignment[]): this;
-    
+
     addQueueNotEmptyCallback(topicPartition: TopicPartition, cb: () => void): this;
     removeQueueNotEmptyCallback(topicPartition: TopicPartition, cb: () => void): this;
-    
+
     assignments(): Assignment[];
     rebalanceProtocol(): 'NONE' | 'COOPERATIVE' | 'EAGER' | null;
 
@@ -261,8 +261,10 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     unsubscribe(): this;
 
-    offsetsForTimes(topicPartitions: TopicPartitionTime[], timeout: number, cb?: (err: LibrdKafkaError | null | undefined, offsets: TopicPartitionOffset[]) => any): void;
-    offsetsForTimes(topicPartitions: TopicPartitionTime[], cb?: (err: LibrdKafkaError | null | undefined, offsets: TopicPartitionOffset[]) => any): void;
+    offsetsForTimes(topicPartitions: TopicPartitionTime[], timeout: number, cb?: (err: LibrdKafkaError, offsets: TopicPartitionOffset[]) => any): void;
+    offsetsForTimes(topicPartitions: TopicPartitionTime[], cb?: (err: LibrdKafkaError, offsets: TopicPartitionOffset[]) => any): void;
+
+    rebalanceProtocol(): string;
 
     static createReadStream(conf: ConsumerGlobalConfig, topicConfig: ConsumerTopicConfig, streamOptions: ReadStreamOptions | number): ConsumerStream;
 }
